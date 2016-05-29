@@ -2,12 +2,15 @@ package webbrowser.example.com.bachelorloker.fragments;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,14 +19,37 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import webbrowser.example.com.bachelorloker.Constants;
 import webbrowser.example.com.bachelorloker.HideFiles;
+import webbrowser.example.com.bachelorloker.HideMets;
+import webbrowser.example.com.bachelorloker.Secur;
+import webbrowser.example.com.bachelorloker.SettingsManager;
+import webbrowser.example.com.bachelorloker.Unsecur;
 import webbrowser.example.com.bachelorloker.adapters.ListAdapterModel;
 import webbrowser.example.com.bachelorloker.db.DBHelper;
 import webbrowser.example.com.bachelorloker.utils.Locker;
@@ -51,91 +77,62 @@ public class FragmentFileList extends Fragment{
         return fragment;
     }
 
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_file_list, container, false);
         ListView lv=(ListView) view.findViewById(R.id.files_list);
         l=(ListView) view.findViewById(R.id.files_list);
         txtpwd=(EditText)view.findViewById(R.id.txt_input);
-        Button LockInDb = (Button) view.findViewById(R.id.LockInDb);
         Button bt_lock = (Button) view.findViewById(R.id.bt_lock);
-        Button bt_unlock = (Button) view.findViewById(R.id.bt_unlock);
         Button bt_encryption = (Button) view.findViewById(R.id.bt_encryption);
         Button bt_dencryption = (Button) view.findViewById(R.id.bt_dencryption);
-        ////
-        Button hesh = (Button) view.findViewById(R.id.hesh);
-        hesh.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                File f = new File(selectedFile);
-                String filename = f.getPath().substring(path.lastIndexOf("/") + 1);
-                String[] name = filename.split("/");
-                String fileName = name[1];
-                String md = md5(fileName);
-                f.renameTo(new File(path,md));
-                Toast.makeText(getActivity(),md,Toast.LENGTH_LONG).show();
-            }
-        });
-        LockInDb.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                File file = new File(selectedFile);
-                int size = (int) file.length();
-                byte[] bytes = new byte[size];
-                String filename = file.getPath().substring(path.lastIndexOf("/") + 1);
-                String[] name = filename.split("/");
-                String fileName = name[1];
 
-
-                try {
-                    BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
-                    buf.read(bytes, 0, bytes.length);
-                    HideFiles hideFiles = new HideFiles();
-                    hideFiles.setByteMas(bytes);
-                    hideFiles.setFileType(fileName);
-                    hideFiles.setLocation(path);
-                    DBHelper.saveLeaguesItem(hideFiles);
-                    boolean deleted = file.delete();
-                    buf.close();
-                } catch (FileNotFoundException e) {
-
-                    e.printStackTrace();
-                } catch (IOException e) {
-
-                    e.printStackTrace();
-                }
-            }
-        });
-        /////
         if(lv!=null){
             lv.setOnItemClickListener(new ClickListener());
         }
         path="/mnt";
         listDirContents();
+
+
+        ////////
         bt_lock.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                File f = new File(selectedFile);
-                String filename = f.getPath().substring(path.lastIndexOf("/") + 1);
-                String[] name = filename.split("/");
-                String fileName = name[1];
-                f.renameTo(new File(path, "." + fileName));
+                HideMets hideMets = new HideMets();
+                String hide = SettingsManager.getHide(getActivity());
+                switch(hide){
+                    case Constants.DB:
+                        File file = new File(selectedFile);
+                        String filename = file.getPath().substring(path.lastIndexOf("/") + 1);
+                        String[] name = filename.split("/");
+                        String fileName = name[1];
+                        hideMets.setFileName(fileName);
+                        hideMets.setHideProt(Constants.DB);
+                        Secur.hideInDB(selectedFile,path,file,fileName);
+                        break;
+                    case Constants.DOT:
+                        File f = new File(selectedFile);
+                        String filenames = f.getPath().substring(path.lastIndexOf("/") + 1);
+                        String[] names = filenames.split("/");
+                        String fileNames = names[1];
+                        hideMets.setNormName(fileNames);
+                        hideMets.setFileName("." + fileNames);
+                        hideMets.setHideProt(Constants.DOT);
+                        Secur.hideDot(selectedFile,path,f,fileNames);
+                        break;
+                }
+                DBHelper.saveHideMet(hideMets);
             }
         });
-        bt_unlock.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                File f=new File(selectedFile);
-                String filename=f.getPath().substring(path.lastIndexOf("/") + 1);
-                String[] name = filename.split("/.");
-                String fileName = name[1];
-                f.renameTo(new File(path, fileName));
-            }
-        });
+
+        //////
         bt_encryption.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 String pwd=txtpwd.getText().toString();
+                Secur.encryptByteMass(getActivity(),pwd,selectedFile);
                 if(pwd.length()>0){
                     if(selectedFile.length()>0){
                         BackTaskLock btlock=new BackTaskLock();
@@ -153,7 +150,8 @@ public class FragmentFileList extends Fragment{
         bt_dencryption.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String pwd=txtpwd.getText().toString();
+
+                /*String pwd=txtpwd.getText().toString();
                 if(pwd.length()>0){
                     if(selectedFile.length()>0){
                         BackTaskUnlock btunlock=new BackTaskUnlock();
@@ -165,7 +163,7 @@ public class FragmentFileList extends Fragment{
                 }
                 else{
                     MessageAlert.showAlert("Please enter password",getActivity());
-                }
+                }*/
             }
         });
         return view;

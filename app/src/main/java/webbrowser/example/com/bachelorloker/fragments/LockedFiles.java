@@ -20,11 +20,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 
+import webbrowser.example.com.bachelorloker.Constants;
 import webbrowser.example.com.bachelorloker.HideFiles;
 import webbrowser.example.com.bachelorloker.R;
+import webbrowser.example.com.bachelorloker.SettingsManager;
+import webbrowser.example.com.bachelorloker.Unsecur;
 import webbrowser.example.com.bachelorloker.adapters.LockedFileAdapter;
 import webbrowser.example.com.bachelorloker.db.DBHelper;
 import webbrowser.example.com.bachelorloker.db.DBLockedFile;
+import webbrowser.example.com.bachelorloker.db.DBSecurMet;
 
 /**
  * Created by Serhii on 4/3/2016.
@@ -40,6 +44,7 @@ public class LockedFiles extends Fragment implements LockedFileAdapter.LockedFil
     String fileName = "";
     String fileLocation = "";
     byte[] byteMas;
+    String normName = "";
 
     public static final String ARG_PAGE = "ARG_PAGE";
 
@@ -79,18 +84,14 @@ public class LockedFiles extends Fragment implements LockedFileAdapter.LockedFil
             bt_unlock.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    File fileNam = new File(fileLocation, fileName);
-                    try {
-                        fileNam.createNewFile();
-                        if(fileNam.exists())
-                        {
-                            OutputStream fo = new FileOutputStream(fileNam);
-                            fo.write(byteMas);
-                            fo.close();
-                            DBHelper.deleteByName(fileName);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    DBSecurMet dbSecurMet = DBHelper.getMetsByName(fileName);
+                    switch(dbSecurMet.hideProt) {
+                        case Constants.DB:
+                            Unsecur.unhideFroDB(fileLocation, fileName, byteMas);
+                            break;
+                        case Constants.DOT:
+                            Unsecur.unhideDot(fileName,fileLocation,dbSecurMet.normName);
+                            break;
                     }
                 }
             });

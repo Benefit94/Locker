@@ -19,12 +19,7 @@
             android:layout_height="wrap_content"
             android:text="@string/label_lock"
             android:onClick="lockFile"/>
-        <Button
-            android:id="@+id/bt_unlock"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/label_unlock"
-            android:onClick="unlockFile"/>
+
         <Button
             android:id="@+id/bt_encryption"
             android:layout_width="wrap_content"
@@ -38,20 +33,14 @@
             android:text="@string/dencryption"
             android:onClick="dencryptionFile"/>
     </LinearLayout>
-    <Button
+    <!--<Button
         android:id="@+id/hesh"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:text="Get Hash"
-        android:onClick="dencryptionFile"/>
-    <Button
-        android:id="@+id/LockInDb"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="Lock In Db"
-        android:onClick="dencryptionFile"/>
+        android:onClick="dencryptionFile"/>-->
+
     <TextView
         android:id="@+id/txt_view"
         android:layout_width="fill_parent"

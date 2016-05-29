@@ -34,8 +34,11 @@ public class Locker {
         boolean isText=false;
         String extension = MimeTypeMap.getFileExtensionFromUrl(file);
         String mimeType=MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-        if(mimeType.startsWith("text/"))
+        if (mimeType == null) {
             isText=true;
+        }else if(mimeType.startsWith("text/")){
+                isText=true;
+        }
         return isText;
     }
 

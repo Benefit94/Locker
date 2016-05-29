@@ -17,7 +17,8 @@
             android:value="1"/>
         <meta-data
             android:name="AA_MODELS"
-            android:value="webbrowser.example.com.bachelorloker.db.DBLockedFile"/>
+            android:value="webbrowser.example.com.bachelorloker.db.DBLockedFile,
+            webbrowser.example.com.bachelorloker.db.DBSecurMet"/>
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -28,6 +29,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".Settings"
+            android:screenOrientation="portrait"/>
     </application>
 
 </manifest>
