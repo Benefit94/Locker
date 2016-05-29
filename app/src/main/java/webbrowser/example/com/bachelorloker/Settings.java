@@ -22,7 +22,7 @@ public class Settings extends AppCompatActivity {
     Spinner two;
     Spinner three;
     String[] Onedata = {"В базі даних","Додавання символу '.' до імені" };
-    String[] Twodata = {"one", "two", "three", "four", "five"};
+    String[] Twodata = {"Шифрування з закритим ключем", "AES"};
     String[] Threedata = {"one", "two", "three", "four", "five"};
 
     protected void onCreate(Bundle savedInstanceState) {

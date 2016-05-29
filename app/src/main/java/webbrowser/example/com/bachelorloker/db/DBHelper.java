@@ -7,6 +7,7 @@ import com.activeandroid.query.Select;
 
 import java.util.List;
 
+import webbrowser.example.com.bachelorloker.EncriptionModel;
 import webbrowser.example.com.bachelorloker.HideFiles;
 import webbrowser.example.com.bachelorloker.HideMets;
 
@@ -44,6 +45,12 @@ public class DBHelper {
         dbLockedFile.save();
     }
 
+    public static void saveEncription(EncriptionModel encriptionModel){
+        DBEncription dbEncription = new DBEncription(encriptionModel.fileName,encriptionModel.key
+                ,encriptionModel.byteMas, encriptionModel.pass);
+        dbEncription.save();
+    }
+
     public static void deleteMetByName(String name){
         new Delete().from(DBSecurMet.class)
                 .where("fileName = ?",name)
@@ -56,8 +63,20 @@ public class DBHelper {
                     .execute();
     }
 
+    public static void deleteEncrByName(String name){
+        new Delete().from(DBEncription.class)
+                .where("fileName = ?",name)
+                .execute();
+    }
+
     public static DBSecurMet getMetsByName(String name){
         return new Select().from(DBSecurMet.class)
+                .where("fileName = ?",name)
+                .executeSingle();
+    }
+
+    public static DBEncription getEncByName(String name){
+        return new Select().from(DBEncription.class)
                 .where("fileName = ?",name)
                 .executeSingle();
     }

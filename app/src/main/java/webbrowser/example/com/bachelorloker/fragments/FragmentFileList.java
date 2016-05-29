@@ -21,6 +21,7 @@ import android.widget.Toast;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.security.InvalidKeyException;
@@ -45,12 +47,14 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import webbrowser.example.com.bachelorloker.Constants;
+import webbrowser.example.com.bachelorloker.EncriptionModel;
 import webbrowser.example.com.bachelorloker.HideFiles;
 import webbrowser.example.com.bachelorloker.HideMets;
 import webbrowser.example.com.bachelorloker.Secur;
 import webbrowser.example.com.bachelorloker.SettingsManager;
 import webbrowser.example.com.bachelorloker.Unsecur;
 import webbrowser.example.com.bachelorloker.adapters.ListAdapterModel;
+import webbrowser.example.com.bachelorloker.db.DBEncription;
 import webbrowser.example.com.bachelorloker.db.DBHelper;
 import webbrowser.example.com.bachelorloker.utils.Locker;
 import webbrowser.example.com.bachelorloker.R;
@@ -130,8 +134,42 @@ public class FragmentFileList extends Fragment{
         bt_encryption.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 String pwd=txtpwd.getText().toString();
+                try {
+                    File file = new File(selectedFile);
+                    String filename = file.getPath().substring(path.lastIndexOf("/") + 1);
+                    String[] name = filename.split("/");
+                    String fileName = name[1];
+                    int size = (int) file.length();
+                    byte[] bytes = new byte[size];
+                    BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
+                    buf.read(bytes, 0, bytes.length);
+                    byte[] keyStart = pwd.getBytes();
+                    KeyGenerator kgen = KeyGenerator.getInstance("AES");
+                    SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
+                    sr.setSeed(keyStart);
+                    kgen.init(128, sr);
+                    SecretKey skey = kgen.generateKey();
+                    byte[] key = skey.getEncoded();
+                    EncriptionModel encriptionModel = new EncriptionModel();
+                    encriptionModel.setFileName(fileName);
+                    encriptionModel.setPass(pwd);
+                    encriptionModel.setKey(key);
+                    byte[] encryptedData = Secur.encryptAES(key,bytes);
+                    encriptionModel.setByteMas(encryptedData);
+                    DBHelper.saveEncription(encriptionModel);
+                    boolean deleted = file.delete();
+                    File fileNam = new File(path, fileName);
+                    fileNam.createNewFile();
+                    OutputStream fo = new FileOutputStream(fileNam);
+                    fo.write(encryptedData);
+                    fo.close();
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                /*String pwd=txtpwd.getText().toString();
                 Secur.encryptByteMass(getActivity(),pwd,selectedFile);
                 if(pwd.length()>0){
                     if(selectedFile.length()>0){
@@ -144,13 +182,33 @@ public class FragmentFileList extends Fragment{
                 }
                 else{
                     MessageAlert.showAlert("Please enter password",getActivity());
-                }
+                }*/
             }
         });
         bt_dencryption.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                String pwd=txtpwd.getText().toString();
+                try {
+                    File file = new File(selectedFile);
+                    String filename = file.getPath().substring(path.lastIndexOf("/") + 1);
+                    String[] name = filename.split("/");
+                    String fileName = name[1];
 
+                    DBEncription enc = DBHelper.getEncByName(fileName);
+                    byte[] decryptedData  = Unsecur.decryptAES(enc.key,enc.byteMas);
+                    boolean deleted = file.delete();
+                    File fileNam = new File(path, fileName);
+                    fileNam.createNewFile();
+                    OutputStream fo = new FileOutputStream(fileNam);
+                    fo.write(decryptedData);
+                    fo.close();
+                    DBHelper.deleteEncrByName(fileName);
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 /*String pwd=txtpwd.getText().toString();
                 if(pwd.length()>0){
                     if(selectedFile.length()>0){

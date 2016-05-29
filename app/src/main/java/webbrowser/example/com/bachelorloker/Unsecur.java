@@ -39,7 +39,7 @@ public class Unsecur {
         DBHelper.deleteMetByName(fileName);
     }
 
-    private static byte[] decryptAES(byte[] raw, byte[] encrypted) throws Exception {
+    public static byte[] decryptAES(byte[] raw, byte[] encrypted) throws Exception {
         SecretKeySpec skeySpec = new SecretKeySpec(raw, "AES");
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.DECRYPT_MODE, skeySpec);
